@@ -1,11 +1,11 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ## Sistema para auxiliar o uso do git sem a necessidade de executar comandos
 ## Escrito por:     Rodrigo Henrique Oliveira
 ## E-mail:          sh@rhorigami.com
 ## Versão:          1.0
 ## Licença:         GPLv3
-## Projeto:         https://github.com/
+## Projeto:         https://github.com/rhorigami/ShellScript-Git-Commands
 
 #######################################
 ############ Configurações ############
