@@ -6,4 +6,6 @@ Copie git.sh para o diretório raiz do seu projeto git, depois execute os seguin
 $ chmod +x git.sh
 
 $ ./git.sh
-
+## Telas
+![](https://github.com/rhorigami/ShellScript-Git-Commands/blob/master/tela01.png?raw=true "Tela 01")
+![](https://github.com/rhorigami/ShellScript-Git-Commands/blob/master/tela02.png?raw=true "Tela 02")
