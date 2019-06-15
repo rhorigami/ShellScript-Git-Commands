@@ -256,8 +256,8 @@ while : ; do
         "${BRANCH_HOMOLOGACAO}") BG_BRANCH=$BG_HOMOLOGACAO ;;
         *) BG_BRANCH=$BG_OUTROS ;;
     esac
-    BACKTITLE="${BG_BRANCH}Você no branch ${BRANCH_ATUAL^^} \Zn"
-    OPCOES=$( eval "${OPCOES_DEFAULT} --backtitle \"$BACKTITLE\" --title '${BG_BRANCH}Você esta no branch '${BRANCH_ATUAL^^}'\Zn' --menu \"O que deseja fazer?\" 0 0 0 "${OPCOES_TELA01[@]}" ")
+    BACKTITLE="${BG_BRANCH}Você está no branch ${BRANCH_ATUAL^^} \Zn"
+    OPCOES=$( eval "${OPCOES_DEFAULT} --backtitle \"$BACKTITLE\" --title '${BG_BRANCH}Você está no branch '${BRANCH_ATUAL^^}'\Zn' --menu \"O que deseja fazer?\" 0 0 0 "${OPCOES_TELA01[@]}" ")
     case $OPCOES in
         01) commitar ;;
         02) listarStatus ;;
