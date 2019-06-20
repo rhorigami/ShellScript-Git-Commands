@@ -101,6 +101,13 @@ function listarStatus {
     $( eval "${OPCOES_DEFAULT} --backtitle \"$BACKTITLE\" --title 'Status.' --textbox $FILE_OUTPUT 0 0 ")
     rm $FILE_OUTPUT
 }
+function listarArquivos {
+    dialogInfobox "Listando arquivos de ${BRANCH_ATUAL^^}." "Gerando listagem..."
+    git ls-tree -r $BRANCH_ATUAL --name-only > $FILE_OUTPUT &
+    sleep 1
+    $( eval "${OPCOES_DEFAULT} --backtitle \"$BACKTITLE\" --title 'Listando arquivos de ${BRANCH_ATUAL^^}.' --textbox $FILE_OUTPUT 0 0 ")
+    rm $FILE_OUTPUT
+}
 function enviarBranchAtual {
     dialogYesNo "Atenção" "Deseja enviar $BRANCH_ATUAL para o servidor $GIT_SERVIDOR"
     if [ $? -eq 0 ]; then
@@ -250,14 +257,15 @@ while : ; do
 09 'Limpar branchs locais com relação à ${BG_PRODUCAO}PRODUÇÃO\Zn.'
 10 'Limpar branchs remotos com relação à ${BG_PRODUCAO}PRODUÇÃO\Zn.'
 11 'Historico do branchs.'
-12 'Remover arquivos não comitados.'"
+12 'Listar arquivos do branchs.'
+13 'Remover arquivos não comitados.'"
     case $BRANCH_ATUAL in
         "${BRANCH_PRODUCAO}") BG_BRANCH=$BG_PRODUCAO ;;
         "${BRANCH_HOMOLOGACAO}") BG_BRANCH=$BG_HOMOLOGACAO ;;
         *) BG_BRANCH=$BG_OUTROS ;;
     esac
-    BACKTITLE="${BG_BRANCH}Você está no branch ${BRANCH_ATUAL^^} \Zn"
-    OPCOES=$( eval "${OPCOES_DEFAULT} --backtitle \"$BACKTITLE\" --title '${BG_BRANCH}Você está no branch '${BRANCH_ATUAL^^}'\Zn' --menu \"O que deseja fazer?\" 0 0 0 "${OPCOES_TELA01[@]}" ")
+    BACKTITLE="${BG_BRANCH}Você no branch ${BRANCH_ATUAL^^} \Zn"
+    OPCOES=$( eval "${OPCOES_DEFAULT} --backtitle \"$BACKTITLE\" --title '${BG_BRANCH}Você esta no branch '${BRANCH_ATUAL^^}'\Zn' --menu \"O que deseja fazer?\" 0 0 0 "${OPCOES_TELA01[@]}" ")
     case $OPCOES in
         01) commitar ;;
         02) listarStatus ;;
@@ -270,7 +278,8 @@ while : ; do
         09) limparBranchLocal ;;
         10) limparBranchRemoto ;;
         11) historico ;;
-        12) removerArquivos ;;
+        12) listarArquivos ;;
+        13) removerArquivos ;;
         *) clear; exit;
     esac
 done
