@@ -1,21 +1,23 @@
 #!/usr/bin/env bash
-
 ## Sistema para auxiliar o uso do git sem a necessidade de executar comandos
 ## Escrito por:     Rodrigo Henrique Oliveira
+
 ## E-mail:          sh@rhorigami.com
 ## Versão:          1.0
 ## Licença:         GPLv3
 ## Projeto:         https://github.com/rhorigami/ShellScript-Git-Commands
-
+export DIALOGRC=""
 #######################################
 ############ Configurações ############
 #######################################
 FILE_OUTPUT="/tmp/rho_out"      #Arquivo para processamento
 GIT_SERVIDOR="origin"           #Servidor para envio do git
 BRANCH_PRODUCAO="master"        #Branch de produção
-BRANCH_HOMOLOGACAO="homolog"    #Branch de homologação
+BRANCH_HOMOLOGACAO="qa"         #Branch de homologação
+BRANCH_DESENVOLVIMENTO="dev"         #Branch de homologação
 BG_PRODUCAO="\Zb\Z1\Zr"         #Cor quando estiver em produção
 BG_HOMOLOGACAO="\Zb\Z5\Zr"      #Cor quando estiver em homologação
+BG_DESENVOLVIMENTO="\Zb\Z2\Zr"      #Cor quando estiver em homologação
 BG_OUTROS="\Zn"                 #Cor para os outros branchs
 
 ##Verificar se Dialog esta instalado....
@@ -162,7 +164,8 @@ function mergeBranch {
         case $BRANCH_SEL in
             "${BRANCH_PRODUCAO}") BRANCH_NOME=${BG_PRODUCAO}"PRODUÇÃO" ;;
             "${BRANCH_HOMOLOGACAO}") BRANCH_NOME=${BG_HOMOLOGACAO}"HOMOLOGAÇÃO" ;;
-            *) BG_BRANCH=${BG_OUTROS}${BRANCH_SEL} ;;
+            "${BRANCH_DESENVOLVIMENTO}") BRANCH_NOME=${BG_DESENVOLVIMENTO}"DESENVOLVIMENTO" ;;
+            *) BRANCH_NOME=${BG_OUTROS}${BRANCH_SEL} ;;
         esac
         if [ $BRANCH_SEL == $BRANCH_PRODUCAO -a $BRANCH_ATUAL == $BRANCH_HOMOLOGACAO ]; then
             dialogInfobox '\Z1\ZbErro.' "Você não pode fazer o merge do branch ${BG_HOMOLOGACAO}HOMOLOGAÇÃO\Zn com $BRANCH_NOME\Zn !Peça auxilio imediatamente!!!!!!!!"
@@ -243,28 +246,69 @@ function removerArquivos {
         git clean -df
     fi
 }
+function excluirBranch {
+    unset listarBranch
+    unset listarBranchOpt
+    listarBranch=( ${listarBranch[@]} `git branch -l | tr '*' ' '` )
+    for((i=0;i<${#listarBranch[@]};i++)); do
+        if [ ${BRANCH_PRODUCAO} == ${listarBranch[$i]} -o  ${BRANCH_HOMOLOGACAO} == ${listarBranch[$i]} -o ${BRANCH_DESENVOLVIMENTO} == ${listarBranch[$i]} -o ${BRANCH_ATUAL} == ${listarBranch[$i]} ]; then
+            continue;
+        fi
+        listarBranchOpt="${listarBranchOpt} ${i} '${listarBranch[$i]}'"
+    done
+    if [ "${listarBranchOpt}" != "" ]; then
+        OPCOES=$( eval "${OPCOES_DEFAULT} --backtitle \"$BACKTITLE\" --title 'Deseja mudar para qual branch?' --menu 'Você está no branch \Zb${BRANCH_ATUAL^^}\Zn' 0 0 0 \
+            ${listarBranchOpt[@]} \
+        ")
+        if [ $? -eq 0 ]; then
+            git branch -D ${listarBranch[${OPCOES}]}
+        fi
+    else
+        dialogInfobox '\Z1\ZbErro.' "Não existem branchs para serem removidos."
+        sleep 2
+        return 1
+    fi
+}
+
+
 
 while : ; do
     BRANCH_ATUAL=$(git branch | sed -n -e 's/^\* \(.*\)/\1/p')
+    if [ "${BRANCH_ATUAL}" == "${BRANCH_DESENVOLVIMENTO}" ] ; then
+        DIALOGRC=rc.dev
+    else
+        if [ "${BRANCH_ATUAL}" == "${BRANCH_HOMOLOGACAO}" ] ; then
+            DIALOGRC="rc.qa"
+        else
+            if [ "${BRANCH_ATUAL}" == "${BRANCH_PRODUCAO}" ] ; then
+                DIALOGRC="rc.prd"
+            else
+                DIALOGRC=""
+            fi
+        fi
+    fi
     OPCOES_TELA01="01 'Comitar'
 02 'Status.'
 03 'Alterar de branch.'
 04 'Nova funcionalidade.'
 05 'Enviar dados de ${BRANCH_ATUAL^^} para o servidor.'
 06 'Baixar dados de ${BG_PRODUCAO}PRODUÇÃO\Zn para ${BRANCH_ATUAL^^}.'
-07 'Aplicar modificações de ${BRANCH_ATUAL^^} em ${BG_HOMOLOGACAO}HOMOLOGAÇÃO\Zn.'
-08 'Aplicar modificações de ${BRANCH_ATUAL^^} em ${BG_PRODUCAO}PRODUÇÃO\Zn.'
-09 'Limpar branchs locais com relação à ${BG_PRODUCAO}PRODUÇÃO\Zn.'
-10 'Limpar branchs remotos com relação à ${BG_PRODUCAO}PRODUÇÃO\Zn.'
-11 'Historico do branchs.'
-12 'Listar arquivos do branchs.'
-13 'Remover arquivos não comitados.'"
+07 'Aplicar modificações de ${BRANCH_ATUAL^^} em ${BG_DESENVOLVIMENTO}DESENVOLVIMENTO\Zn.'
+08 'Aplicar modificações de ${BRANCH_ATUAL^^} em ${BG_HOMOLOGACAO}HOMOLOGAÇÃO\Zn.'
+09 'Aplicar modificações de ${BRANCH_ATUAL^^} em ${BG_PRODUCAO}PRODUÇÃO\Zn.'
+10 'Limpar branchs locais com relação à ${BG_PRODUCAO}PRODUÇÃO\Zn.'
+11 'Limpar branchs remotos com relação à ${BG_PRODUCAO}PRODUÇÃO\Zn.'
+12 'Historico do branchs.'
+13 'Listar arquivos do branchs.'
+14 'Remover arquivos não comitados.'
+15 'Excluir branch'"
     case $BRANCH_ATUAL in
         "${BRANCH_PRODUCAO}") BG_BRANCH=$BG_PRODUCAO ;;
         "${BRANCH_HOMOLOGACAO}") BG_BRANCH=$BG_HOMOLOGACAO ;;
+        "${BRANCH_DESENVOLVIMENTO}") BG_BRANCH=$BG_DESENVOLVIMENTO ;;
         *) BG_BRANCH=$BG_OUTROS ;;
     esac
-    BACKTITLE="${BG_BRANCH}Você no branch ${BRANCH_ATUAL^^} \Zn"
+    BACKTITLE="Branch ${BRANCH_ATUAL^^} "
     OPCOES=$( eval "${OPCOES_DEFAULT} --backtitle \"$BACKTITLE\" --title '${BG_BRANCH}Você esta no branch '${BRANCH_ATUAL^^}'\Zn' --menu \"O que deseja fazer?\" 0 0 0 "${OPCOES_TELA01[@]}" ")
     case $OPCOES in
         01) commitar ;;
@@ -273,13 +317,15 @@ while : ; do
         04) novoBranch ;;
         05) enviarBranchAtual ;;
         06) baixarProducaoBranchAtual ;;
-        07) mergeBranch $BRANCH_HOMOLOGACAO ;;
-        08) mergeBranch $BRANCH_PRODUCAO ;;
-        09) limparBranchLocal ;;
-        10) limparBranchRemoto ;;
-        11) historico ;;
-        12) listarArquivos ;;
-        13) removerArquivos ;;
+        07) mergeBranch $BRANCH_DESENVOLVIMENTO ;;
+        08) mergeBranch $BRANCH_HOMOLOGACAO ;;
+        09) mergeBranch $BRANCH_PRODUCAO ;;
+        10) limparBranchLocal ;;
+        11) limparBranchRemoto ;;
+        12) historico ;;
+        13) listarArquivos ;;
+        14) removerArquivos ;;
+        15) excluirBranch ;;
         *) clear; exit;
     esac
 done
